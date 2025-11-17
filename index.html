@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matikka-apuri – kaavojen hahmottelu</title>
+
+  <!-- MathJax asetukset -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script"
+          async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #020617;
+      color: #e5e7eb;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 6px;
+      font-size: 1.7rem;
+    }
+
+    p.intro {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto 16px;
+      font-size: 0.95rem;
+      color: #cbd5f5;
+    }
+
+    .section-title {
+      max-width: 1200px;
+      margin: 20px auto 8px;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .card h2 {
+      font-size: 1.02rem;
+      margin: 0 0 6px;
+    }
+
+    .formula-symbolic,
+    .formula-numeric {
+      margin-bottom: 6px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .formula-symbolic {
+      border-radius: 999px;
+    }
+
+    .formula-numeric {
+      border-color: rgba(56, 189, 248, 0.75);
+    }
+
+    .relationship {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .relationship strong {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    .slider-row {
+      margin-bottom: 8px;
+    }
+
+    .slider-row label {
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .slider-value {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      margin-left: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #38bdf8;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      margin-top: 4px;
+      color: #9ca3af;
+    }
+
+    .hint strong {
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+
+    .mode-label {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-label select {
+      flex: 1;
+      padding: 3px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: #020617;
+      color: #e5e7eb;
+    }
+
+    .eq-status {
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .eq-status span {
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Matikka-apuri: miten kaava käyttäytyy?</h1>
+  <p class="intro">
+    Vedä liukusäätimiä ja katso, miten <strong>numeerinen kaava</strong> muuttuu.
+    Tarkoitus on nähdä suoraan kaavassa, miten eri suureiden kasvu tai pieneneminen
+    vaikuttaa tulokseen – sama matematiikka toistuu monissa fysiikan ja kemian kaavoissa.
+  </p>
+
+  <!-- YHTEISET SUHDEKAAVAT -->
+  <h2 class="section-title">Yhteiset suhdekaavat (X = y / z)</h2>
+  <div class="grid">
+    <div class="card">
+      <h2>Suhdeluvut: sama matematiikka eri ilmiöissä</h2>
+
+      <label class="mode-label">
+        Valitse ilmiö:
+        <select id="ratio-mode">
+          <option value="density">Tiheys \( \rho = m/V \)</option>
+          <option value="conc">Ainemääräpitoisuus \( c = n/V \)</option>
+          <option value="speed">Keskinopeus \( v = s/t \)</option>
+          <option value="rate">Reaktionopeus \( v = \Delta c/\Delta t \)</option>
+        </select>
+      </label>
+
+      <div class="formula-symbolic math" id="ratio-symbolic"></div>
+      <div class="formula-numeric math" id="ratio-numeric"></div>
+
+      <div class="relationship">
+        <strong>Kaikissa näissä X on “jotain per jokin”:</strong>
+        massa per tilavuus, ainemäärä per tilavuus, matka per aika,
+        konsentraation muutos per aika.  
+        Kun <strong>osoittaja kasvaa</strong> (nimittäjä vakio) → X kasvaa.  
+        Kun <strong>nimittäjä kasvaa</strong> (osoittaja vakio) → X pienenee.
+      </div>
+
+      <div class="slider-row">
+        <label id="ratio-num-label">
+          Yläosa
+          <span class="slider-value" id="ratio-num-val"></span>
+        </label>
+        <input type="range" id="ratio-num" />
+      </div>
+
+      <div class="slider-row">
+        <label id="ratio-den-label">
+          Alaosa
+          <span class="slider-value" id="ratio-den-val"></span>
+        </label>
+        <input type="range" id="ratio-den" />
+      </div>
+
+      <div class="hint" id="ratio-hint"></div>
+    </div>
+  </div>
+
+  <!-- FYSIIKKA -->
+  <h2 class="section-title">Fysiikka</h2>
+  <div class="grid">
+    <!-- Ohmin laki -->
+    <div class="card">
+      <h2>Ohmin laki</h2>
+      <div class="formula-symbolic math">
+        \( U = R\,I \)
+      </div>
+      <div class="formula-numeric math" id="ohm-numeric"></div>
+      <div class="relationship">
+        <strong>Suora verrannollisuus molempiin:</strong>
+        jos kasvatat resistanssia tai virtaa, jännite kasvaa samassa suhteessa.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          R (resistanssi, Ω)
+          <span class="slider-value" id="ohm-R-val"></span>
+        </label>
+        <input type="range" id="ohm-R" min="1" max="200" step="1" value="50">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          I (virta, A)
+          <span class="slider-value" id="ohm-I-val"></span>
+        </label>
+        <input type="range" id="ohm-I" min="0.10" max="5.00" step="0.10" value="1.00">
+      </div>
+
+      <div class="hint">
+        <strong>Kaksi kertaa isompi R tai I → kaksi kertaa isompi U.</strong>
+        Jos molemmat kaksinkertaistuvat, jännite nelinkertaistuu.
+      </div>
+    </div>
+
+    <!-- Liike-energia -->
+    <div class="card">
+      <h2>Liike-energia</h2>
+      <div class="formula-symbolic math">
+        \( E_k = \dfrac{1}{2} m v^2 \)
+      </div>
+      <div class="formula-numeric math" id="ke-numeric"></div>
+      <div class="relationship">
+        <strong>Energia on lineaarinen massassa, mutta neliöllinen nopeudessa:</strong>
+        pieni nopeuden kasvu voi kasvattaa energiaa paljon.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          m (kg)
+          <span class="slider-value" id="ke-m-val"></span>
+        </label>
+        <input type="range" id="ke-m" min="50" max="2000" step="50" value="1000">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          v (m/s)
+          <span class="slider-value" id="ke-v-val"></span>
+        </label>
+        <input type="range" id="ke-v" min="0" max="40" step="1" value="20">
+      </div>
+
+      <div class="hint">
+        <strong>Nopeuden kaksinkertaistaminen nelinkertaistaa \(E_k\):n.</strong>
+        Sama ajatus toistuu esim. auto-onnettomuuksien energia-arvioissa.
+      </div>
+    </div>
+
+    <!-- Gravitaatiovoima -->
+    <div class="card">
+      <h2>Gravitaatiovoima kahden kappaleen välillä</h2>
+      <div class="formula-symbolic math">
+        \( F = G \dfrac{m_1 m_2}{r^2} \)
+      </div>
+      <div class="formula-numeric math" id="grav-numeric"></div>
+      <div class="relationship">
+        <strong>Voima kasvaa massojen tulon mukana, mutta pienenee etäisyyden neliössä:</strong>
+        kun $r$ kaksinkertaistuu, voima putoaa neljäsosaan.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          \(m_1\) (kg)
+          <span class="slider-value" id="grav-m1-val"></span>
+        </label>
+        <input type="range" id="grav-m1" min="1" max="10000" step="100" value="1000">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          \(m_2\) (kg)
+          <span class="slider-value" id="grav-m2-val"></span>
+        </label>
+        <input type="range" id="grav-m2" min="1" max="10000" step="100" value="1000">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          r (m)
+          <span class="slider-value" id="grav-r-val"></span>
+        </label>
+        <input type="range" id="grav-r" min="0.5" max="50" step="0.5" value="10">
+      </div>
+
+      <div class="hint">
+        <strong>Gravitaatio on heikko voima pienillä massoilla ja etäisyyksillä.</strong>
+        Tästä näet, miksi ihmiset eivät juuri vedä toisiaan puoleensa painovoimalla.
+      </div>
+    </div>
+
+    <!-- Lämpöenergia -->
+    <div class="card">
+      <h2>Lämpöenergia lämmityksessä</h2>
+      <div class="formula-symbolic math">
+        \( Q = c\, m\, \Delta T \)
+      </div>
+      <div class="formula-numeric math" id="heat-numeric"></div>
+      <div class="relationship">
+        <strong>Tarvittava lämpöenergia kasvaa suoraan kolmessa asiassa:</strong>
+        ominaislämpökapasiteetissa, massassa ja lämpötilan muutoksessa.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          c (J/(kg·K))
+          <span class="slider-value" id="heat-c-val"></span>
+        </label>
+        <input type="range" id="heat-c" min="2000" max="5000" step="100" value="4200">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          m (kg)
+          <span class="slider-value" id="heat-m-val"></span>
+        </label>
+        <input type="range" id="heat-m" min="0.10" max="5.00" step="0.10" value="1.00">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          ΔT (K)
+          <span class="slider-value" id="heat-dT-val"></span>
+        </label>
+        <input type="range" id="heat-dT" min="0" max="80" step="2" value="20">
+      </div>
+
+      <div class="hint">
+        <strong>Isompi vesimäärä ja suurempi lämpötilan nosto vaativat paljon enemmän energiaa.</strong>
+        Sama rakenne toistuu kalorimetriassa.
+      </div>
+    </div>
+  </div>
+
+  <!-- KEMIA -->
+  <h2 class="section-title">Kemia</h2>
+  <div class="grid">
+    <!-- Yleinen kaasulaki -->
+    <div class="card">
+      <h2>Yleinen kaasulaki (pV = nRT)</h2>
+      <div class="formula-symbolic math">
+        \( pV = nRT \Rightarrow p = \dfrac{nRT}{V} \)
+      </div>
+      <div class="formula-numeric math" id="gas-numeric"></div>
+      <div class="relationship">
+        <strong>Paine kasvaa, kun lisäät ainemäärää tai lämpötilaa, ja pienenee, kun tilavuus kasvaa.</strong>
+        Täysin sama idea kuin tiheydessä: "jotain per tilavuus".
+      </div>
+
+      <div class="slider-row">
+        <label>
+          n (mol)
+          <span class="slider-value" id="gas-n-val"></span>
+        </label>
+        <input type="range" id="gas-n" min="0.10" max="5.00" step="0.10" value="1.00">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          T (K)
+          <span class="slider-value" id="gas-T-val"></span>
+        </label>
+        <input type="range" id="gas-T" min="250" max="350" step="5" value="298">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          V (m³)
+          <span class="slider-value" id="gas-V-val"></span>
+        </label>
+        <input type="range" id="gas-V" min="0.01" max="1.00" step="0.01" value="0.10">
+      </div>
+
+      <div class="hint">
+        <strong>Tilavuuden puolittaminen kaksinkertaistaa paineen</strong> (jos n ja T vakio) – sama X = y/z -rakenne.
+      </div>
+    </div>
+
+    <!-- Reaktion entalpia -->
+    <div class="card">
+      <h2>Reaktion entalpia</h2>
+      <div class="formula-symbolic math">
+        \( \Delta H = n\,\Delta H_\mathrm{m} \)
+      </div>
+      <div class="formula-numeric math" id="enthalpy-numeric"></div>
+      <div class="relationship">
+        <strong>Entalpiamuutos kasvaa suorassa suhteessa reagoivan ainemäärän kanssa.</strong>
+        Jos reagoivaa ainetta on kaksinkertainen määrä, vapautuva tai sitoutuva energia on kaksinkertainen.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          n (mol)
+          <span class="slider-value" id="enth-n-val"></span>
+        </label>
+        <input type="range" id="enth-n" min="0.10" max="5.00" step="0.10" value="1.00">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          ΔH<sub>m</sub> (kJ/mol)
+          <span class="slider-value" id="enth-Hm-val"></span>
+        </label>
+        <input type="range" id="enth-Hm" min="-400" max="400" step="10" value="-200">
+      </div>
+
+      <div class="hint">
+        <strong>Negatiivinen ΔH tarkoittaa eksotermistä reaktiota, positiivinen endotermistä.</strong>
+        Huomaa, että vain suuruus muuttuu, merkki ei.
+      </div>
+    </div>
+
+    <!-- Tasapainovakio / Q -->
+    <div class="card">
+      <h2>Tasapainovakio ja reaktioosamäärä</h2>
+      <div class="formula-symbolic math">
+        Reaktio: \( \text{A} \rightleftharpoons \text{B} \)  
+        \( K = \dfrac{[\text{B}]_\text{tasap}}{[\text{A}]_\text{tasap}} \)
+      </div>
+      <div class="formula-numeric math" id="eq-numeric"></div>
+      <div class="relationship">
+        <strong>Reaktioosamäärä \(Q\) kertoo hetkellisen suhteen.</strong>
+        Jos \(Q < K\), reaktio pyrkii kohti tuotteita (oikealle).  
+        Jos \(Q > K\), reaktio pyrkii takaisin lähtöaineisiin (vasemmalle).
+      </div>
+
+      <div class="slider-row">
+        <label>
+          [A] (mol/L)
+          <span class="slider-value" id="eq-A-val"></span>
+        </label>
+        <input type="range" id="eq-A" min="0.10" max="2.00" step="0.05" value="1.00">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          [B] (mol/L)
+          <span class="slider-value" id="eq-B-val"></span>
+        </label>
+        <input type="range" id="eq-B" min="0.10" max="2.00" step="0.05" value="1.00">
+      </div>
+
+      <div class="hint">
+        <strong>Tämä on taas sama X = y/z -rakenne:</strong>
+        \(Q = [\text{B}]/[\text{A}]\). Pienikin muutos pitoisuuksissa voi kääntää suunnan, mihin päin tasapaino “haluaa”.
+      </div>
+
+      <div class="eq-status" id="eq-status"></div>
+    </div>
+
+    <!-- pH vahva happo -->
+    <div class="card">
+      <h2>pH vahvalla hapolla</h2>
+      <div class="formula-symbolic math">
+        \( \mathrm{pH} = -\log_{10}[\mathrm{H_3O^+}] \)
+      </div>
+      <div class="formula-numeric math" id="ph-numeric"></div>
+      <div class="relationship">
+        <strong>pH on logaritminen asteikko:</strong>
+        kun \([\mathrm{H_3O^+}]\) pienenee kymmenkertaisesti, pH kasvaa yhdellä yksiköllä.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          Eksponentti (vahva happo), \([\mathrm{H_3O^+}] = 10^{-x}\) mol/L
+          <span class="slider-value" id="ph-exp-val"></span>
+        </label>
+        <input type="range" id="ph-exp" min="0" max="14" step="0.1" value="1.0">
+      </div>
+
+      <div class="hint">
+        <strong>pH ≈ x, kun kyseessä on vahva yksiarvoinen happo (esim. HCl):</strong>
+        \([\mathrm{H_3O^+}] = 10^{-1} \Rightarrow \mathrm{pH} \approx 1\).
+      </div>
+    </div>
+
+    <!-- Henderson–Hasselbalch -->
+    <div class="card">
+      <h2>Henderson–Hasselbalch (puskuriliuos)</h2>
+      <div class="formula-symbolic math">
+        \( \mathrm{pH} = \mathrm{p}K_a + \log_{10} \dfrac{[\mathrm{A^-}]}{[\mathrm{HA}]} \)
+      </div>
+      <div class="formula-numeric math" id="hh-numeric"></div>
+      <div class="relationship">
+        <strong>pH riippuu lähes kokonaan suhdeluvusta \([\mathrm{A^-}]/[\mathrm{HA}]\):</strong>
+        kymmenkertainen muutos suhteessa muuttaa pH:ta vain yhdellä yksiköllä.
+      </div>
+
+      <div class="slider-row">
+        <label>
+          pK<sub>a</sub>
+          <span class="slider-value" id="hh-pKa-val"></span>
+        </label>
+        <input type="range" id="hh-pKa" min="3.0" max="11.0" step="0.1" value="7.0">
+      </div>
+
+      <div class="slider-row">
+        <label>
+          Suhde [A⁻]/[HA]
+          <span class="slider-value" id="hh-ratio-val"></span>
+        </label>
+        <input type="range" id="hh-ratio" min="-2" max="2" step="0.05" value="0">
+      </div>
+
+      <div class="hint">
+        <strong>Kun [A⁻] = [HA], logaritmi on 0 ja pH = pK<sub>a</sub>.</strong>
+        Jos [A⁻]/[HA] = 10, pH = pK<sub>a</sub> + 1; jos 0,1, pH = pK<sub>a</sub> − 1.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function renderMath(el) {
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([el]).catch(function (err) {
+          console.error(err);
+        });
+      }
+    }
+
+    function fmt(x, decimals = 2) {
+      return Number(x).toFixed(decimals);
+    }
+
+    function fmtSmart(x) {
+      const ax = Math.abs(x);
+      if (!isFinite(x)) return "—";
+      if (ax >= 10000 || (ax > 0 && ax < 0.0001)) {
+        return x.toExponential(2);
+      }
+      return x.toFixed(4);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      /* --- YHTEISET SUHDEKAAVAT --- */
+      const ratioMode = document.getElementById("ratio-mode");
+      const ratioSymbolic = document.getElementById("ratio-symbolic");
+      const ratioNumeric = document.getElementById("ratio-numeric");
+      const ratioNum = document.getElementById("ratio-num");
+      const ratioDen = document.getElementById("ratio-den");
+      const ratioNumLabel = document.getElementById("ratio-num-label");
+      const ratioDenLabel = document.getElementById("ratio-den-label");
+      const ratioNumVal = document.getElementById("ratio-num-val");
+      const ratioDenVal = document.getElementById("ratio-den-val");
+      const ratioHint = document.getElementById("ratio-hint");
+
+      const ratioConfigs = {
+        density: {
+          symbolic: "\\rho = \\dfrac{m}{V}",
+          xSymbol: "\\rho",
+          xUnit: "\\text{g/mL}",
+          numLabel: "m (massa, g)",
+          denLabel: "V (tilavuus, mL)",
+          numUnit: "\\text{g}",
+          denUnit: "\\text{mL}",
+          numMin: 10, numMax: 200, numStep: 5, numInit: 100,
+          denMin: 10, denMax: 200, denStep: 5, denInit: 100,
+          hint: "<strong>Kun lisäät massaa mutta tilavuus pysyy, tiheys kasvaa.</strong> Kun kasvatat tilavuutta ilman massan muutosta, tiheys pienenee."
+        },
+        conc: {
+          symbolic: "c = \\dfrac{n}{V}",
+          xSymbol: "c",
+          xUnit: "\\text{mol/L}",
+          numLabel: "n (mol)",
+          denLabel: "V (L)",
+          numUnit: "\\text{mol}",
+          denUnit: "\\text{L}",
+          numMin: 0.10, numMax: 2.00, numStep: 0.05, numInit: 0.50,
+          denMin: 0.10, denMax: 5.00, denStep: 0.10, denInit: 1.00,
+          hint: "<strong>Laimennuslasku on vain murtoluku:</strong> lisää tilavuutta → pitoisuus pienenee samassa suhteessa."
+        },
+        speed: {
+          symbolic: "v = \\dfrac{s}{t}",
+          xSymbol: "v",
+          xUnit: "\\text{km/h}",
+          numLabel: "s (matka, km)",
+          denLabel: "t (aika, h)",
+          numUnit: "\\text{km}",
+          denUnit: "\\text{h}",
+          numMin: 1, numMax: 200, numStep: 1, numInit: 50,
+          denMin: 0.25, denMax: 5.00, denStep: 0.25, denInit: 1.00,
+          hint: "<strong>Sama matka pidemmällä ajalla → pienempi keskinopeus.</strong> Sama aika pidemmälle matkalle → suurempi keskinopeus."
+        },
+        rate: {
+          symbolic: "v = \\dfrac{\\Delta c}{\\Delta t}",
+          xSymbol: "v",
+          xUnit: "\\text{mol\\,L}^{-1}\\text{s}^{-1}",
+          numLabel: "Δc (mol/L)",
+          denLabel: "Δt (s)",
+          numUnit: "\\text{mol/L}",
+          denUnit: "\\text{s}",
+          numMin: 0.01, numMax: 1.00, numStep: 0.01, numInit: 0.10,
+          denMin: 1, denMax: 120, denStep: 1, denInit: 10,
+          hint: "<strong>Suuri konsentraation muutos lyhyessä ajassa → suuri reaktionopeus.</strong> Sama muutos pitkällä ajalla → hidas reaktio."
+        }
+      };
+
+      let currentRatioCfg = ratioConfigs.density;
+
+      function applyRatioConfig(cfg) {
+        currentRatioCfg = cfg;
+        ratioSymbolic.innerHTML = `\\(${cfg.symbolic}\\)`;
+        renderMath(ratioSymbolic);
+
+        ratioNum.min = cfg.numMin;
+        ratioNum.max = cfg.numMax;
+        ratioNum.step = cfg.numStep;
+        ratioNum.value = cfg.numInit;
+
+        ratioDen.min = cfg.denMin;
+        ratioDen.max = cfg.denMax;
+        ratioDen.step = cfg.denStep;
+        ratioDen.value = cfg.denInit;
+
+        ratioNumLabel.childNodes[0].textContent = cfg.numLabel + " ";
+        ratioDenLabel.childNodes[0].textContent = cfg.denLabel + " ";
+        ratioHint.innerHTML = cfg.hint;
+
+        updateRatioValues();
+      }
+
+      function updateRatioValues() {
+        const cfg = currentRatioCfg;
+        const num = Number(ratioNum.value);
+        const den = Number(ratioDen.value);
+        const x = num / den;
+
+        ratioNumVal.textContent = fmt(num, 2);
+        ratioDenVal.textContent = fmt(den, 2);
+
+        const tex =
+          `${cfg.xSymbol} = \\dfrac{${fmt(num,2)}\\,${cfg.numUnit}}{${fmt(den,2)}\\,${cfg.denUnit}} = ${fmt(x,3)}\\,${cfg.xUnit}`;
+        ratioNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(ratioNumeric);
+      }
+
+      ratioMode.addEventListener("change", () => {
+        const cfg = ratioConfigs[ratioMode.value];
+        applyRatioConfig(cfg);
+      });
+
+      ratioNum.addEventListener("input", updateRatioValues);
+      ratioDen.addEventListener("input", updateRatioValues);
+      applyRatioConfig(currentRatioCfg);
+
+      /* --- FYSIIKKA --- */
+
+      // Ohmin laki
+      const ohmR = document.getElementById("ohm-R");
+      const ohmI = document.getElementById("ohm-I");
+      const ohmRVal = document.getElementById("ohm-R-val");
+      const ohmIVal = document.getElementById("ohm-I-val");
+      const ohmNumeric = document.getElementById("ohm-numeric");
+
+      function updateOhm() {
+        const R = Number(ohmR.value);
+        const I = Number(ohmI.value);
+        const U = R * I;
+        ohmRVal.textContent = R + " Ω";
+        ohmIVal.textContent = fmt(I, 2) + " A";
+        const tex = `U = ${R}\\,\\Omega \\cdot ${fmt(I,2)}\\,\\text{A} = ${fmt(U,2)}\\,\\text{V}`;
+        ohmNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(ohmNumeric);
+      }
+
+      ohmR.addEventListener("input", updateOhm);
+      ohmI.addEventListener("input", updateOhm);
+
+      // Liike-energia
+      const keM = document.getElementById("ke-m");
+      const keV = document.getElementById("ke-v");
+      const keMVal = document.getElementById("ke-m-val");
+      const keVVal = document.getElementById("ke-v-val");
+      const keNumeric = document.getElementById("ke-numeric");
+
+      function updateKE() {
+        const m = Number(keM.value);
+        const v = Number(keV.value);
+        const E = 0.5 * m * v * v;
+        keMVal.textContent = m + " kg";
+        keVVal.textContent = v + " m/s";
+        const tex = `E_k = \\dfrac{1}{2} \\cdot ${m}\\,\\text{kg} \\cdot (${v}\\,\\text{m/s})^2 = ${fmt(E,0)}\\,\\text{J}`;
+        keNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(keNumeric);
+      }
+
+      keM.addEventListener("input", updateKE);
+      keV.addEventListener("input", updateKE);
+
+      // Gravitaatiovoima
+      const gravM1 = document.getElementById("grav-m1");
+      const gravM2 = document.getElementById("grav-m2");
+      const gravR = document.getElementById("grav-r");
+      const gravM1Val = document.getElementById("grav-m1-val");
+      const gravM2Val = document.getElementById("grav-m2-val");
+      const gravRVal = document.getElementById("grav-r-val");
+      const gravNumeric = document.getElementById("grav-numeric");
+
+      const G = 6.674e-11;
+
+      function updateGrav() {
+        const m1 = Number(gravM1.value);
+        const m2 = Number(gravM2.value);
+        const r = Number(gravR.value);
+        const F = G * m1 * m2 / (r * r);
+        gravM1Val.textContent = m1 + " kg";
+        gravM2Val.textContent = m2 + " kg";
+        gravRVal.textContent = fmt(r, 2) + " m";
+        const tex =
+          `F = 6.674\\times 10^{-11}\\,\\dfrac{\\text{N m}^2}{\\text{kg}^2} \\cdot \\dfrac{${m1}\\,\\text{kg} \\cdot ${m2}\\,\\text{kg}}{(${fmt(r,2)}\\,\\text{m})^2} \\approx ${fmtSmart(F)}\\,\\text{N}`;
+        gravNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(gravNumeric);
+      }
+
+      gravM1.addEventListener("input", updateGrav);
+      gravM2.addEventListener("input", updateGrav);
+      gravR.addEventListener("input", updateGrav);
+
+      // Lämpöenergia
+      const heatC = document.getElementById("heat-c");
+      const heatM = document.getElementById("heat-m");
+      const heatDT = document.getElementById("heat-dT");
+      const heatCVal = document.getElementById("heat-c-val");
+      const heatMVal = document.getElementById("heat-m-val");
+      const heatDTVal = document.getElementById("heat-dT-val");
+      const heatNumeric = document.getElementById("heat-numeric");
+
+      function updateHeat() {
+        const c = Number(heatC.value);
+        const m = Number(heatM.value);
+        const dT = Number(heatDT.value);
+        const Q = c * m * dT;      // J
+        const QkJ = Q / 1000;
+        heatCVal.textContent = c + " J/(kg·K)";
+        heatMVal.textContent = fmt(m, 2) + " kg";
+        heatDTVal.textContent = dT + " K";
+        const tex =
+          `Q = ${c}\\,\\text{J/(kg·K)} \\cdot ${fmt(m,2)}\\,\\text{kg} \\cdot ${dT}\\,\\text{K} = ${fmt(QkJ,1)}\\,\\text{kJ}`;
+        heatNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(heatNumeric);
+      }
+
+      heatC.addEventListener("input", updateHeat);
+      heatM.addEventListener("input", updateHeat);
+      heatDT.addEventListener("input", updateHeat);
+
+      /* --- KEMIA --- */
+
+      // Kaasulaki
+      const gasN = document.getElementById("gas-n");
+      const gasT = document.getElementById("gas-T");
+      const gasV = document.getElementById("gas-V");
+      const gasNVal = document.getElementById("gas-n-val");
+      const gasTVal = document.getElementById("gas-T-val");
+      const gasVVal = document.getElementById("gas-V-val");
+      const gasNumeric = document.getElementById("gas-numeric");
+      const R = 8.314; // J/(mol·K)
+
+      function updateGas() {
+        const n = Number(gasN.value);
+        const T = Number(gasT.value);
+        const V = Number(gasV.value);
+        const pPa = n * R * T / V;       // Pa
+        const pKPa = pPa / 1000;
+        gasNVal.textContent = fmt(n, 2) + " mol";
+        gasTVal.textContent = T + " K";
+        gasVVal.textContent = fmt(V, 3) + " m³";
+        const tex =
+          `p = \\dfrac{${fmt(n,2)}\\,\\text{mol} \\cdot 8.314\\,\\text{J/(mol·K)} \\cdot ${T}\\,\\text{K}}{${fmt(V,3)}\\,\\text{m}^3} \\approx ${fmt(pKPa,1)}\\,\\text{kPa}`;
+        gasNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(gasNumeric);
+      }
+
+      gasN.addEventListener("input", updateGas);
+      gasT.addEventListener("input", updateGas);
+      gasV.addEventListener("input", updateGas);
+
+      // Entalpia
+      const enthN = document.getElementById("enth-n");
+      const enthHm = document.getElementById("enth-Hm");
+      const enthNVal = document.getElementById("enth-n-val");
+      const enthHmVal = document.getElementById("enth-Hm-val");
+      const enthNumeric = document.getElementById("enthalpy-numeric");
+
+      function updateEnthalpy() {
+        const n = Number(enthN.value);
+        const Hm = Number(enthHm.value);
+        const H = n * Hm;
+        enthNVal.textContent = fmt(n, 2) + " mol";
+        enthHmVal.textContent = Hm + " kJ/mol";
+        const tex =
+          `\\Delta H = ${fmt(n,2)}\\,\\text{mol} \\cdot ${Hm}\\,\\text{kJ/mol} = ${fmt(H,1)}\\,\\text{kJ}`;
+        enthNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(enthNumeric);
+      }
+
+      enthN.addEventListener("input", updateEnthalpy);
+      enthHm.addEventListener("input", updateEnthalpy);
+
+      // Tasapaino / Q
+      const eqA = document.getElementById("eq-A");
+      const eqB = document.getElementById("eq-B");
+      const eqAVal = document.getElementById("eq-A-val");
+      const eqBVal = document.getElementById("eq-B-val");
+      const eqNumeric = document.getElementById("eq-numeric");
+      const eqStatus = document.getElementById("eq-status");
+      const Kconst = 10.0;
+
+      function updateEq() {
+        const A = Number(eqA.value);
+        const B = Number(eqB.value);
+        const Q = B / A;
+        eqAVal.textContent = fmt(A, 2) + " mol/L";
+        eqBVal.textContent = fmt(B, 2) + " mol/L";
+
+        const tex =
+          `Q = \\dfrac{[\\text{B}]}{[\\text{A}]} = \\dfrac{${fmt(B,2)}}{${fmt(A,2)}} = ${fmt(Q,2)},\\quad K = ${Kconst}`;
+        eqNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(eqNumeric);
+
+        let msg;
+        if (Q < Kconst) {
+          msg = `Nyt \\(Q < K\\): <span>reaktio pyrkii kohti tuotteita (oikealle)</span>.`;
+        } else if (Q > Kconst) {
+          msg = `Nyt \\(Q > K\\): <span>reaktio pyrkii kohti lähtöaineita (vasemmalle)</span>.`;
+        } else {
+          msg = `Nyt \\(Q \\approx K\\): <span>järjestelmä on tasapainossa</span>.`;
+        }
+        eqStatus.innerHTML = msg;
+        renderMath(eqStatus);
+      }
+
+      eqA.addEventListener("input", updateEq);
+      eqB.addEventListener("input", updateEq);
+
+      // pH vahva happo
+      const phExp = document.getElementById("ph-exp");
+      const phExpVal = document.getElementById("ph-exp-val");
+      const phNumeric = document.getElementById("ph-numeric");
+
+      function updatePH() {
+        const x = Number(phExp.value); // [H3O+] = 10^-x
+        const conc = Math.pow(10, -x);
+        const pH = x; // vahva yksiarvoinen happo
+        phExpVal.textContent = fmt(x, 1);
+        const tex =
+          `[\\text{H}_3\\text{O}^+] = 10^{-${fmt(x,1)}}\\,\\text{mol/L} \\Rightarrow \\mathrm{pH} = -\\log_{10}(10^{-${fmt(x,1)}}) = ${fmt(pH,2)}`;
+        phNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(phNumeric);
+      }
+
+      phExp.addEventListener("input", updatePH);
+
+      // Henderson–Hasselbalch
+      const hhPka = document.getElementById("hh-pKa");
+      const hhRatio = document.getElementById("hh-ratio");
+      const hhPkaVal = document.getElementById("hh-pKa-val");
+      const hhRatioVal = document.getElementById("hh-ratio-val");
+      const hhNumeric = document.getElementById("hh-numeric");
+
+      function updateHH() {
+        const pKa = Number(hhPka.value);
+        const logRatio = Number(hhRatio.value); // tämä on suoraan log10([A-]/[HA])
+        const ratio = Math.pow(10, logRatio);
+        const pH = pKa + logRatio;
+        hhPkaVal.textContent = fmt(pKa, 2);
+        hhRatioVal.textContent = `≈ ${fmt(ratio,2)} (log₁₀ = ${fmt(logRatio,2)})`;
+
+        const tex =
+          `\\mathrm{pH} = ${fmt(pKa,2)} + \\log_{10}\\dfrac{[\\text{A}^-]}{[\\text{HA}]} = ${fmt(pKa,2)} + ${fmt(logRatio,2)} = ${fmt(pH,2)}`;
+        hhNumeric.innerHTML = `\\(${tex}\\)`;
+        renderMath(hhNumeric);
+      }
+
+      hhPka.addEventListener("input", updateHH);
+      hhRatio.addEventListener("input", updateHH);
+
+      /* Alustus kaikille korteille */
+      updateOhm();
+      updateKE();
+      updateGrav();
+      updateHeat();
+      updateGas();
+      updateEnthalpy();
+      updateEq();
+      updatePH();
+      updateHH();
+    });
+  </script>
+</body>
+</html>
